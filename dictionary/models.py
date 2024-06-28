@@ -1,6 +1,6 @@
 from django.db import models
 import uuid
-
+import json
 
 # Create your models here.
 
@@ -31,6 +31,8 @@ class User(models.Model):
     # return {lan_code: lan_description for lan_code in language_list.json}
 
 class AbstractOriginLanguage(models.Model):
+    # with open('language_list.json') as language_json:
+        # language_list = json.load(language_json)
     language_list = {
         "en": "American English",
         "zh": "Chinese",
@@ -62,7 +64,7 @@ class AbstractOriginLanguage(models.Model):
     }
     language_name = models.CharField(max_length=100)
     language_code = models.CharField(max_length=2, choices=language_list)
-    locale = models.CharField(max_length=100)
+    # locale = models.CharField(max_length=100)
     locale_code = models.CharField(max_length=2, choices=locale_list)
 
     def __str__(self) -> str:
@@ -77,12 +79,11 @@ class AbstractOriginLanguage(models.Model):
 class OriginLanguage(AbstractOriginLanguage):
     pass
 
-class Language(AbstractOriginLanguage):
+class Language(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.PROTECT, related_name='+')
     language_name = models.CharField(max_length=100, unique=True)
-    # language_code = models.ForeignKey(OriginLanguage.language_code, on_delete=models.PROTECT, related_name='+')
-    # locale_code = models.ForeignKey(OriginLanguage.locale_code, on_delete=models.PROTECT, related_name='+')
+    origin_language = models.ForeignKey(OriginLanguage, on_delete=models.PROTECT, related_name='+', null=True)
     description = models.CharField(null=True, max_length=1024)
     
     class Meta:
@@ -97,6 +98,5 @@ class Translation(models.Model):
     dictionary = models.ForeignKey(Dictionary, on_delete=models.CASCADE, related_name='+')
     keyword = models.CharField(max_length=255)
     translation = models.CharField(max_length=1024)
-
 
 
