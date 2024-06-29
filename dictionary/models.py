@@ -1,6 +1,9 @@
+from csv import Dialect
 from django.db import models
 import uuid
 import json
+
+from customdict.settings import BASE_DIR
 
 # Create your models here.
 
@@ -31,53 +34,35 @@ class User(models.Model):
     # return {lan_code: lan_description for lan_code in language_list.json}
 
 class AbstractOriginLanguage(models.Model):
-    # with open('language_list.json') as language_json:
-        # language_list = json.load(language_json)
-    language_list = {
-        "en": "American English",
-        "zh": "Chinese",
-        "ar": "Arabic",
-        "fa": "Persian",
-        "fr": "French",
-        "es": "Spanish",
-        "ru": "Russian",
-        "de": "German",
-        "ja": "Japanese",
-        "it": "Italian",
-        "pt": "Portuguese",
-        "hi": "Hindi",
-    }
-    locale_list = {
-        "US": "United States",
-        "CN": "simplified, PRC",
-        "RU": "Russia",
-        "FR": "France",
-        "ES": "Spain",
-        "GB": "United Kingdom",
-        "DE": "Germany",
-        "BR": "Brazil",
-        "CA": "Canada",
-        "MX": "Mexico",
-        "IT": "Italy",
-        "JP": "Japan",
-        "IN": "India",
-    }
+    with open( BASE_DIR / 'dictionary/lang_list.json', 'r', encoding='utf-8') as language_json:
+        language_list = json.load(language_json)
+
+    with open( BASE_DIR / 'dictionary/locale_list.json', 'r', encoding='utf-8') as locale_json:
+        locale_list = json.load(locale_json)
+
     language_name = models.CharField(max_length=100)
-    language_code = models.CharField(max_length=2, choices=language_list)
-    # locale = models.CharField(max_length=100)
-    locale_code = models.CharField(max_length=2, choices=locale_list)
+    language_code = models.CharField(max_length=3, choices=language_list)
+    locale = models.CharField(max_length=100)
+    locale_code = models.CharField(max_length=3, choices=locale_list)
+    dialect = models.CharField(max_length=100)
 
     def __str__(self) -> str:
         return f'{self.language_code}-{self.locale_code} ({self.language_name})'
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['language_code', 'locale_code'], name='unique_local_language_code')
+            models.UniqueConstraint(fields=['language_code', 'locale_code', 'dialect'], name='unique_language')
         ]
         abstract = True
 
 class OriginLanguage(AbstractOriginLanguage):
-    pass
+    locale = None
+    dialect = None
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['language_code', 'locale_code'], name='unique_local_language_code')
+        ]
 
 class Language(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
