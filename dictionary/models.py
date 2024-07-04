@@ -1,4 +1,5 @@
 from csv import Dialect
+from django.utils import timezone
 from django.db import models
 import uuid
 import json
@@ -11,17 +12,19 @@ class User(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
-    _username = models.CharField(max_length=100, unique=True)
+    _username = models.CharField(max_length=100, db_column="username", unique=True)
     email = models.EmailField()
-    _password = models.CharField(max_length=256)
+    _password = models.CharField(max_length=256, db_column="password")
+
 
     def __str__(self) -> str:
         return f'{self.first_name} {self.last_name}'
     
+    # These are not django getter/setter,
+    # only could be used for manipulating object properties
     @property
     def username(self):
         return self._username
-    
     @username.setter
     def username(self, password, new_username):
         if password == self._password:
@@ -33,6 +36,11 @@ class User(models.Model):
 # def get_language_list():
     # return {lan_code: lan_description for lan_code in language_list.json}
 
+class UserMetaData(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='+')
+    sign_up_time = models.DateTimeField(default=timezone.now)
+
+
 class AbstractOriginLanguage(models.Model):
     with open( BASE_DIR / 'dictionary/lang_list.json', 'r', encoding='utf-8') as language_json:
         language_list = json.load(language_json)
@@ -43,7 +51,7 @@ class AbstractOriginLanguage(models.Model):
     language_name = models.CharField(max_length=100)
     language_code = models.CharField(max_length=3, choices=language_list)
     locale = models.CharField(max_length=100)
-    locale_code = models.CharField(max_length=3, choices=locale_list)
+    locale_code = models.CharField(max_length=4, choices=locale_list)
     dialect = models.CharField(max_length=100)
 
     def __str__(self) -> str:
@@ -75,9 +83,15 @@ class Language(models.Model):
         constraints = []
 
 class Dictionary(models.Model):
+    dictionary_name = models.CharField(max_length=100)
     user = models.ForeignKey(User, on_delete=models.PROTECT)
     source_language = models.ForeignKey(Language, on_delete=models.PROTECT, related_name='+')
     target_language = models.ForeignKey(Language, on_delete=models.PROTECT, related_name='+')
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['dictionary_name', 'user'], name='unique_dictionary_per_user')
+        ]
 
 class Translation(models.Model):
     dictionary = models.ForeignKey(Dictionary, on_delete=models.CASCADE, related_name='+')
