@@ -249,5 +249,8 @@
     "1": "World",
     "YE": "Yemen",
     "ZM": "Zambia",
-    "ZW": "Zimbabwe"
+    "ZW": "Zimbabwe",
+    "Hans":"Simplified Chinese",
+    "Hant":"Traditional Chinese"
+
 }

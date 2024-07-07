@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+    <head>
+            <title> Dictionaries List</title>
+    </head>
+    <body>
+
+        <h1>Dictionaries List</h1>
+            <ul>
+                {% for dict in dictionaries %}
+                <li>{{ dict.dictionary_name }}</li>
+                {% endfor %}
+            </ul>
+    </body>
+</html>
