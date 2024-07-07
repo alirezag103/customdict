@@ -6,12 +6,15 @@ from .models import User, Dictionary
 
 # Create your views here.
 
-def get_dictionary_list(request, user_name):
+def get_dictionary_list(request, username):
 
-    requested_user = User.objects.filter(_username=user_name)
+    retrieve_user = User.objects.filter(username=username)
     
-    if requested_user.exists():
-        dictionary_list = Dictionary.objects.filter(user__in=requested_user)
+    if retrieve_user.exists():
+        requested_user = retrieve_user[:1].get()
+        dictionary_list = Dictionary.objects.filter(user=requested_user)\
+            .select_related('source_language')\
+            .values('dictionary_name', 'source_language_id')
         return render(request, 'dictionaries.html', {'dictionaries': dictionary_list,
                                                      'user': requested_user})
     else:

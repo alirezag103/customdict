@@ -12,27 +12,24 @@ class User(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
-    _username = models.CharField(max_length=100, db_column="username", unique=True)
+    username = models.CharField(max_length=100, db_column="username", unique=True)
     email = models.EmailField()
-    _password = models.CharField(max_length=256, db_column="password")
+    password = models.CharField(max_length=256, db_column="password")
 
 
     def __str__(self) -> str:
         return f'{self.first_name} {self.last_name}'
     
-    # These are not django getter/setter,
-    # only could be used for manipulating object properties
-    @property
-    def username(self):
-        return self._username
-    @username.setter
-    def username(self, password, new_username):
-        if password == self._password:
-            self._username = new_username
-            return f'User name of \"{self.__str__()}\" has been changed!'
-        else:
-            raise ValueError("Wrong password provided!")
+    # add django getter/setter for username and password,
+    # normal python getter/setter didn't work
         
+
+    def defiened_languages(self):
+        user_langs = User.objects.filter(id=self.id).select_related('user__language')
+        return user_langs
+
+
+
 # def get_language_list():
     # return {lan_code: lan_description for lan_code in language_list.json}
 
