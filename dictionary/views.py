@@ -1,5 +1,6 @@
 from django.http import HttpResponseNotFound
 from django.shortcuts import render
+from dictionary.forms import NewDictionaryForm
 from .models import User, Dictionary
 from django.core.exceptions import ObjectDoesNotExist
 
@@ -24,17 +25,25 @@ def get_dictionary_list(request, username):
         return render(request, 'dictionaries.html', {'dictionaries': dictionary_list,
                                                      'user': requested_user})
     else:
-        return render(request, HttpResponseNotFound("Username not found!"))
+        return HttpResponseNotFound("Username not found!")
     
 
 def create_dictionary(request, username):
     if request.method == "POST":
-        pass
+        form = NewDictionaryForm(request.POST)
+        # if form.is_valid():
+        if False:
+            form.save()
+            return redirect("welcome")
+        # pass
 
     else:
         try:
             user = User.objects.get(username=username)
+            form = NewDictionaryForm()
+            return render(request, "new_dictionary.html", {"form": form})
         except ObjectDoesNotExist:
             return HttpResponseNotFound("Username not found!")
         
+
     
