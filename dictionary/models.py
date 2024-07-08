@@ -39,10 +39,10 @@ class UserMetaData(models.Model):
 
 
 class AbstractOriginLanguage(models.Model):
-    with open( BASE_DIR / 'dictionary/lang_list.json', 'r', encoding='utf-8') as language_json:
+    with open( BASE_DIR / 'dictionary/storeroom/lang_list.json', 'r', encoding='utf-8') as language_json:
         language_list = json.load(language_json)
 
-    with open( BASE_DIR / 'dictionary/locale_list.json', 'r', encoding='utf-8') as locale_json:
+    with open( BASE_DIR / 'dictionary/storeroom/locale_list.json', 'r', encoding='utf-8') as locale_json:
         locale_list = json.load(locale_json)
 
     language_name = models.CharField(max_length=100)
