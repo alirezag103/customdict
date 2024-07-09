@@ -1,4 +1,4 @@
-from django.http import HttpResponseNotFound
+from django.http import HttpResponse, HttpResponseNotFound
 from django.shortcuts import render
 from dictionary.forms import NewDictionaryForm
 from .models import User, Dictionary
@@ -31,11 +31,25 @@ def get_dictionary_list(request, username):
 def create_dictionary(request, username):
     if request.method == "POST":
         form = NewDictionaryForm(request.POST)
+
+        user_dictionaries = User.objects.select_related("dictionary") \
+            .values("id", "dictionary__dictionary_name").get(username=username)
+        
+        form.is_valid()
+        new_dictionary_name = form.cleaned_data["dictionary_name"]
+        old_dictionary_names = user_dictionaries.get("dictionary__dictionary_name")
         # if form.is_valid():
-        if False:
+        if old_dictionary_names is None \
+            or new_dictionary_name not in old_dictionary_names:
+
+            form.cleaned_data['user'] = user_dictionaries.get("id")
+            # raise IndexError(form.cleaned_data)
             form.save()
-            return redirect("welcome")
-        # pass
+            return HttpResponse("Succeeded!")
+        else:
+            raise ValueError("Dictionary name already exists")
+            
+            # return redirect("welcome")
 
     else:
         try:
