@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>{{dictionary.dictionary_name}}</title>
+    </head>
+    <body>
+        <h1>Your Dictioanry Content</h1>
+        <p>
+            Dictioanry name is: {{dictionary.dictionary_name}}
+            <br>
+            Translation from {{dictionary.source_language}} to {{dictionary.target_language}}
+        </p>
+        <br>
+        <br>
+        <table>
+            <tr>
+                <th>Word/Phrase</th>
+                <th>Translation</th>
+            </tr>
+            {% for record in translations %}
+            <tr>
+                <td>{{record.word}}</td>
+                <td>{{record.translation}}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </body>
+</html>

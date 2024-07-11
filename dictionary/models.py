@@ -77,7 +77,7 @@ class Language(models.Model):
     description = models.CharField(null=True, max_length=1024)
 
     def __str__(self) -> str:
-        return f'{self.origin_language}: {self.language_name}'
+        return f'{self.language_name}: {self.origin_language}'
     
     class Meta:
         constraints = []
