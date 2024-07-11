@@ -67,3 +67,19 @@ def create_dictionary(request, username):
         except ObjectDoesNotExist:
             return HttpResponseNotFound("Username not found!")
         
+
+def get_dictionary_content(request, username, dictionary):
+    user = User.objects.get(username=username)
+    user_dictionary = Dictionary.objects.filter(user=user)[0]
+
+    if user_dictionary is None:
+        return HttpResponse("The dictionary does not exist! <br>or You can not access that!")
+    else:
+        dictionary_content = Translation.objects.filter(dictionary=user_dictionary)
+        template = 'dictionary.html'
+        template_content = {
+            'dictioanry': user_dictionary,
+            'translations': dictionary_content,
+        }
+        return render(request, template, template_content)
+    
