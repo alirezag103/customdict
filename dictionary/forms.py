@@ -1,15 +1,18 @@
-from django.forms import (HiddenInput, ModelForm, DateInput, TimeInput,
-                          TextInput, IntegerField, UUIDField, Widget)
+from django import forms
 from django.core.exceptions import ValidationError
+from pkg_resources import require
 
-from .models import Dictionary
+from .models import Dictionary, User
 
 
-class NewDictionaryForm(ModelForm):
+class NewDictionaryForm(forms.ModelForm):
 
     class Meta:
         model = Dictionary
         fields = ['dictionary_name', 'source_language', 'target_language', 'user']
-        Widgets = {
-            'user': HiddenInput(),
+        widgets = {
+            'user': forms.HiddenInput(),
         }
+
+
+

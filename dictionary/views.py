@@ -1,8 +1,10 @@
+from django import forms
 from django.http import HttpResponse, HttpResponseNotFound
 from django.shortcuts import render
 from dictionary.forms import NewDictionaryForm
-from .models import User, Dictionary
+from .models import Translation, User, Dictionary
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
 
 # Create your views here.
 
@@ -13,7 +15,7 @@ def retrieve_user_by(*, username, error_msg="Username not found!"):
     except ObjectDoesNotExist:
         return HttpResponseNotFound(error_msg)
 
-def get_dictionary_list(request, username):
+def get_dictionaries_list(request, username):
 
     retrieve_user = User.objects.filter(username=username)[:1]
     
@@ -38,13 +40,18 @@ def create_dictionary(request, username):
         form.is_valid()
         new_dictionary_name = form.cleaned_data["dictionary_name"]
         old_dictionary_names = user_dictionaries.get("dictionary__dictionary_name")
-        # if form.is_valid():
+
         if old_dictionary_names is None \
             or new_dictionary_name not in old_dictionary_names:
 
-            form.cleaned_data['user'] = user_dictionaries.get("id")
-            # raise IndexError(form.cleaned_data)
-            form.save()
+            with transaction.atomic():
+                new_dictionary = Dictionary()
+                new_dictionary.dictionary_name = form.cleaned_data["dictionary_name"]
+                new_dictionary.source_language = form.cleaned_data["source_language"]
+                new_dictionary.target_language = form.cleaned_data["target_language"]
+                new_dictionary.user_id = user_dictionaries.get("id")
+                new_dictionary.save()
+
             return HttpResponse("Succeeded!")
         else:
             raise ValueError("Dictionary name already exists")
@@ -55,9 +62,8 @@ def create_dictionary(request, username):
         try:
             user = User.objects.get(username=username)
             form = NewDictionaryForm()
+            # form.fields['user'].widget = forms.HiddenInput()
             return render(request, "new_dictionary.html", {"form": form})
         except ObjectDoesNotExist:
             return HttpResponseNotFound("Username not found!")
         
-
-    
