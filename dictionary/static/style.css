@@ -1,0 +1,11 @@
+
+body {
+    background-color: whitesmoke;
+}
+table {
+    border: 2px dotted;
+}
+
+th, td {
+    border: 1px double;
+}

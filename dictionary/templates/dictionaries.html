@@ -11,7 +11,8 @@
 
             <ul>
                 {% for dict in dictionaries %}
-                <li>{{ dict.dictionary_name }}</li>
+                <li>{{ dict.dictionary_name }}
+                    <a href="{% url 'dictionary_content' user.username dict.dictionary_name %}">&#x1F517</a></li>
                 {% endfor %}
             </ul>
     </body>
