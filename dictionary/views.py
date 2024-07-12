@@ -1,6 +1,7 @@
 from django import forms
 from django.http import HttpResponse, HttpResponseNotFound
-from django.shortcuts import render
+from django.shortcuts import redirect, render
+from django.urls import reverse
 from dictionary.forms import NewDictionaryForm
 from .models import Translation, User, Dictionary
 from django.core.exceptions import ObjectDoesNotExist
@@ -24,8 +25,12 @@ def get_dictionaries_list(request, username):
         dictionary_list = Dictionary.objects.filter(user=requested_user)\
             .select_related('source_language')\
             .values('dictionary_name', 'source_language_id')
-        return render(request, 'dictionaries.html', {'dictionaries': dictionary_list,
-                                                     'user': requested_user})
+        
+        template_name = 'dictionaries.html'
+        template_context = {'dictionaries': dictionary_list,
+                            'user': requested_user}
+        
+        return render(request, template_name, template_context)
     else:
         return HttpResponseNotFound("Username not found!")
     
@@ -35,11 +40,12 @@ def create_dictionary(request, username):
         form = NewDictionaryForm(request.POST)
 
         user_dictionaries = User.objects.select_related("dictionary") \
-            .values("id", "dictionary__dictionary_name").get(username=username)
+            .values("id", "dictionary__dictionary_name").filter(username=username)
         
         form.is_valid()
+        # raise IndexError(user_dictionaries)
         new_dictionary_name = form.cleaned_data["dictionary_name"]
-        old_dictionary_names = user_dictionaries.get("dictionary__dictionary_name")
+        old_dictionary_names = [item.get("dictionary__dictionary_name") for item in user_dictionaries]
 
         if old_dictionary_names is None \
             or new_dictionary_name not in old_dictionary_names:
@@ -49,14 +55,14 @@ def create_dictionary(request, username):
                 new_dictionary.dictionary_name = form.cleaned_data["dictionary_name"]
                 new_dictionary.source_language = form.cleaned_data["source_language"]
                 new_dictionary.target_language = form.cleaned_data["target_language"]
-                new_dictionary.user_id = user_dictionaries.get("id")
+                new_dictionary.user_id = user_dictionaries[0].get("id")
                 new_dictionary.save()
 
-            return HttpResponse("Succeeded!")
+            # return HttpResponse("Succeeded!")
+            return redirect(reverse("user_dictionaries", kwargs={'username': username}))
         else:
             raise ValueError("Dictionary name already exists")
             
-            # return redirect("welcome")
 
     else:
         try:
@@ -76,10 +82,10 @@ def get_dictionary_content(request, username, dictionary):
         return HttpResponse("The dictionary does not exist! <br>or You can not access that!")
     else:
         dictionary_content = Translation.objects.filter(dictionary=user_dictionary)
-        template = 'dictionary.html'
-        template_content = {
+        template_name = 'dictionary.html'
+        template_context = {
             'dictionary': user_dictionary,
             'translations': dictionary_content,
         }
-        return render(request, template, template_content)
+        return render(request, template_name, template_context)
     
