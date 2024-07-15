@@ -1,6 +1,6 @@
 import keyword
 from django import forms
-from django.http import Http404, HttpResponse, HttpResponseNotFound
+from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseNotFound
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from dictionary.forms import AddTranslationFrom, NewDictionaryForm
@@ -74,15 +74,16 @@ def create_dictionary(request, username):
             return HttpResponseNotFound("Username not found!")
         
 
-def get_dictionary_content(request, username, dictionary):
+def get_dictionary_content(request, username, dictionary_name):
     try:
         user = User.objects.get(username=username)
     except ObjectDoesNotExist:
         return HttpResponseNotFound("Username not found!")
-    user_dictionary = Dictionary.objects.filter(user=user)[0]
-
-    if user_dictionary is None:
+    try:
+        user_dictionary = Dictionary.objects.filter(user=user).get(dictionary_name=dictionary_name)
+    except ObjectDoesNotExist:
         return HttpResponse("The dictionary does not exist! <br>or You can not access that!")
+    
     else:
         dictionary_content = Translation.objects.filter(dictionary=user_dictionary)
         template_name = 'dictionary.html'
@@ -94,12 +95,12 @@ def get_dictionary_content(request, username, dictionary):
     
 
 
-def add_translation(request, username, dictionary):
+def add_translation(request, username, dictionary_name):
 
     try:
         requested_user = User.objects.filter(username=username).get()
         try:
-            requested_dictionary = Dictionary.objects.filter(user=requested_user, dictionary_name=dictionary).get()
+            requested_dictionary = Dictionary.objects.filter(user=requested_user, dictionary_name=dictionary_name).get()
 
             if request.method == "POST":
                 form = AddTranslationFrom(request.POST)
@@ -107,7 +108,7 @@ def add_translation(request, username, dictionary):
                 try:
                     current_translations = Translation.objects \
                         .filter(dictionary=requested_dictionary, keyword=form['keyword']).get()
-                    return HttpResponse(f'Keyword "{current_translations.keyword}" already exists!', status_code=400)
+                    return HttpResponseBadRequest(f'Keyword "{current_translations.keyword}" already exists!', status_code=400)
                 except ObjectDoesNotExist:
                     pass
                 Translation.objects.create(
