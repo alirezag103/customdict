@@ -98,4 +98,7 @@ class Translation(models.Model):
     keyword = models.CharField(max_length=255)
     translation = models.CharField(max_length=1024)
 
-
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['dictionary', 'keyword'], name='unique_keword_per_dictionary')
+        ]

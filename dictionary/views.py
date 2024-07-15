@@ -1,8 +1,9 @@
+import keyword
 from django import forms
-from django.http import HttpResponse, HttpResponseNotFound
+from django.http import Http404, HttpResponse, HttpResponseNotFound
 from django.shortcuts import redirect, render
 from django.urls import reverse
-from dictionary.forms import NewDictionaryForm
+from dictionary.forms import AddTranslationFrom, NewDictionaryForm
 from .models import Translation, User, Dictionary
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
@@ -41,13 +42,12 @@ def create_dictionary(request, username):
 
         user_dictionaries = User.objects.select_related("dictionary") \
             .values("id", "dictionary__dictionary_name").filter(username=username)
-        
+
         form.is_valid()
-        # raise IndexError(user_dictionaries)
         new_dictionary_name = form.cleaned_data["dictionary_name"]
         old_dictionary_names = [item.get("dictionary__dictionary_name") for item in user_dictionaries]
 
-        if old_dictionary_names is None \
+        if old_dictionary_names == [None] \
             or new_dictionary_name not in old_dictionary_names:
 
             with transaction.atomic():
@@ -68,14 +68,17 @@ def create_dictionary(request, username):
         try:
             user = User.objects.get(username=username)
             form = NewDictionaryForm()
-            # form.fields['user'].widget = forms.HiddenInput()
+
             return render(request, "new_dictionary.html", {"form": form})
         except ObjectDoesNotExist:
             return HttpResponseNotFound("Username not found!")
         
 
 def get_dictionary_content(request, username, dictionary):
-    user = User.objects.get(username=username)
+    try:
+        user = User.objects.get(username=username)
+    except ObjectDoesNotExist:
+        return HttpResponseNotFound("Username not found!")
     user_dictionary = Dictionary.objects.filter(user=user)[0]
 
     if user_dictionary is None:
@@ -89,3 +92,39 @@ def get_dictionary_content(request, username, dictionary):
         }
         return render(request, template_name, template_context)
     
+
+
+def add_translation(request, username, dictionary):
+
+    try:
+        requested_user = User.objects.filter(username=username).get()
+        try:
+            requested_dictionary = Dictionary.objects.filter(user=requested_user, dictionary_name=dictionary).get()
+
+            if request.method == "POST":
+                form = AddTranslationFrom(request.POST)
+                form.is_valid()
+                try:
+                    current_translations = Translation.objects \
+                        .filter(dictionary=requested_dictionary, keyword=form['keyword']).get()
+                    return HttpResponse(f'Keyword "{current_translations.keyword}" already exists!', status_code=400)
+                except ObjectDoesNotExist:
+                    pass
+                Translation.objects.create(
+                    dictionary=requested_dictionary,
+                    keyword=form.cleaned_data['keyword'],
+                    translation=form.cleaned_data['translation'],
+                )
+            else:
+                form = AddTranslationFrom()
+
+                template_name = 'new_translation.html'
+                template_context = {
+                'form': form,
+                'dictionary':requested_dictionary,
+            }
+            return render(request, template_name, template_context)
+        except ObjectDoesNotExist:
+            return HttpResponseNotFound("Dictionary Not Found!")
+    except ObjectDoesNotExist:
+        return HttpResponseNotFound("User Not Found!")
