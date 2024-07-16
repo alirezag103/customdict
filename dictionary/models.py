@@ -28,7 +28,9 @@ class User(models.Model):
         user_langs = User.objects.filter(id=self.id).select_related('user__language')
         return user_langs
 
-
+    def save(self, *args, **kwargs):
+        self.username = self.username.casefold()
+        return super(User, self).save(*args, **kwargs)
 
 # def get_language_list():
     # return {lan_code: lan_description for lan_code in language_list.json}

@@ -1,12 +1,12 @@
 import keyword
 from django import forms
-from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseNotFound
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFound
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from dictionary.forms import AddTranslationFrom, NewDictionaryForm
 from .models import Translation, User, Dictionary
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction
+from django.db import transaction, models
 
 # Create your views here.
 
@@ -23,9 +23,8 @@ def get_dictionaries_list(request, username):
     
     if retrieve_user.exists():
         requested_user = retrieve_user.get()
-        dictionary_list = Dictionary.objects.filter(user=requested_user)\
-            .select_related('source_language')\
-            .values('dictionary_name', 'source_language_id')
+        dictionary_list = Dictionary.objects.filter(user=requested_user) \
+            .values('dictionary_name')
         
         template_name = 'dictionaries.html'
         template_context = {'dictionaries': dictionary_list,
@@ -41,11 +40,12 @@ def create_dictionary(request, username):
         form = NewDictionaryForm(request.POST)
 
         user_dictionaries = User.objects.select_related("dictionary") \
-            .values("id", "dictionary__dictionary_name").filter(username=username)
+            .filter(username=username).values("id") \
+                .annotate(dictioanry_name=models.F('dictionary__dictionary_name'))
 
         form.is_valid()
         new_dictionary_name = form.cleaned_data["dictionary_name"]
-        old_dictionary_names = [item.get("dictionary__dictionary_name") for item in user_dictionaries]
+        old_dictionary_names = [item.get("dictionary_name") for item in user_dictionaries]
 
         if old_dictionary_names == [None] \
             or new_dictionary_name not in old_dictionary_names:
@@ -77,13 +77,12 @@ def create_dictionary(request, username):
 def get_dictionary_content(request, username, dictionary_name):
     try:
         user = User.objects.get(username=username)
+        try:
+            user_dictionary = Dictionary.objects.filter(user=user).get(dictionary_name=dictionary_name)
+        except ObjectDoesNotExist:
+            return HttpResponseBadRequest("The dictionary does not exist! <br>or You can not access that!")
     except ObjectDoesNotExist:
         return HttpResponseNotFound("Username not found!")
-    try:
-        user_dictionary = Dictionary.objects.filter(user=user).get(dictionary_name=dictionary_name)
-    except ObjectDoesNotExist:
-        return HttpResponse("The dictionary does not exist! <br>or You can not access that!")
-    
     else:
         dictionary_content = Translation.objects.filter(dictionary=user_dictionary)
         template_name = 'dictionary.html'
@@ -107,8 +106,8 @@ def add_translation(request, username, dictionary_name):
                 form.is_valid()
                 try:
                     current_translations = Translation.objects \
-                        .filter(dictionary=requested_dictionary, keyword=form['keyword']).get()
-                    return HttpResponseBadRequest(f'Keyword "{current_translations.keyword}" already exists!', status_code=400)
+                        .filter(dictionary=requested_dictionary, keyword=form.cleaned_data['keyword']).get()
+                    return HttpResponseBadRequest(f'Keyword "{current_translations.keyword}" already exists!')
                 except ObjectDoesNotExist:
                     pass
                 Translation.objects.create(
@@ -126,6 +125,6 @@ def add_translation(request, username, dictionary_name):
             }
             return render(request, template_name, template_context)
         except ObjectDoesNotExist:
-            return HttpResponseNotFound("Dictionary Not Found!")
+            return HttpResponseNotFound("Dictionary not found!")
     except ObjectDoesNotExist:
-        return HttpResponseNotFound("User Not Found!")
+        return HttpResponseNotFound("User not found!")
