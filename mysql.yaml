@@ -1,0 +1,11 @@
+version: '3'
+services:
+  dict_sql:
+    image: mysql:8.0
+    ports:
+      - 3300:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=dictionary
+      - MYSQL_USER=dict
+      - MYSQL_PASSWORD=password
