@@ -1,0 +1,8 @@
+*.log
+*.pot
+*.py[cod]
+*/__pycache__/
+db.sqlite3
+.vscode/
+my.cnf
+mysql.yaml
