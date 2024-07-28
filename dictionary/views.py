@@ -115,11 +115,10 @@ def add_translation(request, username, dictionary_name):
                     keyword=form.cleaned_data['keyword'],
                     translation=form.cleaned_data['translation'],
                 )
-            else:
-                form = AddTranslationFrom()
+            form = AddTranslationFrom()
 
-                template_name = 'new_translation.html'
-                template_context = {
+            template_name = 'new_translation.html'
+            template_context = {
                 'form': form,
                 'dictionary':requested_dictionary,
             }
