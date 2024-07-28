@@ -119,8 +119,8 @@ def add_translation(request, username, dictionary_name):
 
             template_name = 'new_translation.html'
             template_context = {
-            'form': form,
-            'dictionary':requested_dictionary,
+                'form': form,
+                'dictionary':requested_dictionary,
             }
             return render(request, template_name, template_context)
         except ObjectDoesNotExist:
