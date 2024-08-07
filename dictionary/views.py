@@ -1,4 +1,3 @@
-import keyword
 from django import forms
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFound
 from django.shortcuts import redirect, render
@@ -8,6 +7,7 @@ from .models import Translation, User, Dictionary
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction, models
 from django.contrib.auth import authenticate
+from django.contrib.auth.decorators import login_required
 
 # Create your views here.
 
@@ -18,23 +18,17 @@ def retrieve_user_by(*, username, error_msg="Username not found!"):
     except ObjectDoesNotExist:
         return HttpResponseNotFound(error_msg)
 
-def get_dictionaries_list(request, username):
+@login_required()
+def get_dictionaries_list(request, username=None):
 
-    retrieve_user = User.objects.filter(username=username)[:1]
+    dictionary_list = Dictionary.objects.filter(user=request.user) \
+        .values('dictionary_name')
     
-    if retrieve_user.exists():
-        requested_user = retrieve_user.get()
-        dictionary_list = Dictionary.objects.filter(user=requested_user) \
-            .values('dictionary_name')
-        
-        template_name = 'dictionaries.html'
-        template_context = {'dictionaries': dictionary_list,
-                            'user': requested_user}
-        
-        return render(request, template_name, template_context)
-    else:
-        return HttpResponseNotFound("Username not found!")
-    
+    template_name = 'dictionaries.html'
+    template_context = {'dictionaries': dictionary_list,
+                        'user': request.user}
+    return render(request, template_name, template_context)
+
 
 def create_dictionary(request, username):
     if request.method == "POST":
