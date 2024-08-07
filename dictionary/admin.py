@@ -3,7 +3,7 @@ from . import models
 
 # Register your models here.
 
-@admin.register(models.User)
+# @admin.register(models.User)
 class UserAdmin(admin.ModelAdmin):
     search_fields = ['first_name', 'last_name']
 

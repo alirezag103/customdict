@@ -3,34 +3,30 @@ from django.utils import timezone
 from django.db import models
 import uuid
 import json
-
+from django.contrib.auth.models import User
 from customdict.settings import BASE_DIR
 
 # Create your models here.
 
-class User(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
-    username = models.CharField(max_length=100, db_column="username", unique=True)
-    email = models.EmailField()
-    password = models.CharField(max_length=256, db_column="password")
+# class User(models.Model):
+#     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+#     first_name = models.CharField(max_length=100)
+#     last_name = models.CharField(max_length=100)
+#     username = models.CharField(max_length=100, db_column="username", unique=True)
+#     email = models.EmailField()
+#     password = models.CharField(max_length=256, db_column="password")
 
 
-    def __str__(self) -> str:
-        return f'{self.first_name} {self.last_name}'
+#     def __str__(self) -> str:
+#         return f'{self.first_name} {self.last_name}'
     
-    # add django getter/setter for username and password,
-    # normal python getter/setter didn't work
-        
+#     def defiened_languages(self):
+#         user_langs = User.objects.filter(id=self.id).select_related('user__language')
+#         return user_langs
 
-    def defiened_languages(self):
-        user_langs = User.objects.filter(id=self.id).select_related('user__language')
-        return user_langs
-
-    def save(self, *args, **kwargs):
-        self.username = self.username.casefold()
-        return super(User, self).save(*args, **kwargs)
+#     def save(self, *args, **kwargs):
+#         self.username = self.username.casefold()
+#         return super(User, self).save(*args, **kwargs)
 
 # def get_language_list():
     # return {lan_code: lan_description for lan_code in language_list.json}
