@@ -5,13 +5,14 @@ This is a very simple Dictionary which tries to be as customizable as possible
 ## Requirements
 
 You need python 3.10 and above
+(OR if you have Docker installed you can go to [**Install by Docker**](https://github.com/alirezag103/customdict#install-by-docker) section)
 
 
 ## Installation
 
 #### Installing dependencies
-
 I've used poetry as dependency manager.
+
 **If** you have [poetry](https://python-poetry.org/docs/) installed, then you can run the following commands where you colned the repository:
 1. `poetry env use python`
 2. `poetry shell`
@@ -19,10 +20,24 @@ I've used poetry as dependency manager.
 
 **Otherwise** you can install dependencies using the *Excellency* `pip` :
 1. Firstly it is better to create a virtual environment and activating it:
+
 *CREATE* `python -m venv venv`
+
 *ACTIVATE* `venv/scripts/activate`
 2. then:
 `pip install -r requirements.txt`
+
+### Install by Docker
+Build the image using the command:
+`docker build -t customdict:1.0 .`
+Then you can run the container on port 8000:
+`docker run -p 8000:8000 --name dictionary -d customdict:1.0`
+
+**NOTE**: if you look into Dockerfile you'll notice that a *SuperUser* is created by building the image,
+username is `admin` and password is `password` and you can use it to test the app.
+You can change the password by accessing the container's terminal while it is running:
+`docker exec -ir dictionary /bin/sh`
+then use the `python manage.py changepassword admin` and go on ...
 
 
 ### Migration
