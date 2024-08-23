@@ -24,21 +24,9 @@ I've used poetry as dependency manager.
 *CREATE* `python -m venv venv`
 
 *ACTIVATE* `venv/scripts/activate`
+
 2. then:
 `pip install -r requirements.txt`
-
-### Install by Docker
-Build the image using the command:
-`docker build -t customdict:1.0 .`
-Then you can run the container on port 8000:
-`docker run -p 8000:8000 --name dictionary -d customdict:1.0`
-
-**NOTE**: if you look into Dockerfile you'll notice that a *SuperUser* is created by building the image,
-username is `admin` and password is `password` and you can use it to test the app.
-You can change the password by accessing the container's terminal while it is running:
-`docker exec -ir dictionary /bin/sh`
-then use the `python manage.py changepassword admin` and go on ...
-
 
 ### Migration
 
@@ -65,3 +53,20 @@ First create a superuser using the following command:
 
 then log into the admin panel on `127.0.0.1:8000`
 you may start palying by *OriginLanguage* section
+
+
+
+## Install by Docker
+Build the image using the command:
+`docker build -t customdict:1.0 .`
+
+Then you can run the container on port 8000:
+`docker run -p 8000:8000 --name dictionary -d customdict:1.0`
+
+**NOTE**: if you look into Dockerfile you'll notice that a *SuperUser* is created by building the image,
+username is `admin` and password is `password` and you can use it to test the app.
+You can change the password by accessing the container's terminal while it is running:
+
+`docker exec -ir dictionary /bin/sh`
+
+then use the `python manage.py changepassword admin` and go on ...
