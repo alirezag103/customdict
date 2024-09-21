@@ -13,13 +13,13 @@ You need python 3.10 and above
 #### Installing dependencies
 I've used poetry as dependency manager.
 
-**If** you have [poetry](https://python-poetry.org/docs/) installed, then you can run the following commands where you colned the repository:
+**If** you have [poetry](https://python-poetry.org/docs/) installed, then you can run the following commands where you cloned the repository:
 1. `poetry env use python`
 2. `poetry shell`
 3. `poetry install --no-root`
 
 **Otherwise** you can install dependencies using the *Excellency* `pip` :
-1. Firstly it is better to create a virtual environment and activating it:
+1. Firstly it is better to create a virtual environment and activate it:
 
 *CREATE* `python -m venv venv`
 
@@ -31,7 +31,7 @@ I've used poetry as dependency manager.
 ### Migration
 
 After installing the dependencies you **need** to setup your database.
-in your activated virtual environment and in the root directory of app run:
+in your activated virtual environment and in the root directory of app run this command:
 `python manage.py migrate`
 
 
@@ -52,7 +52,7 @@ First create a superuser using the following command:
 `python manage.py createsuperuser`
 
 then log into the admin panel on `127.0.0.1:8000`
-you may start palying by *OriginLanguage* section
+you may start palying around by *OriginLanguage* section
 
 
 
