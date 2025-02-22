@@ -19,23 +19,25 @@ def retrieve_user_by(*, username, error_msg="Username not found!"):
         return HttpResponseNotFound(error_msg)
 
 @login_required()
-def get_dictionaries_list(request, username=None):
+def get_dictionaries_list(request):
 
     dictionary_list = Dictionary.objects.filter(user=request.user) \
         .values('dictionary_name')
     
     template_name = 'dictionaries.html'
-    template_context = {'dictionaries': dictionary_list,
-                        'user': request.user}
+    template_context = {
+        'dictionaries': dictionary_list,
+        'user': request.user,
+    }
     return render(request, template_name, template_context)
 
-
-def create_dictionary(request, username):
+@login_required()
+def create_dictionary(request):
     if request.method == "POST":
         form = NewDictionaryForm(request.POST)
 
         user_dictionaries = User.objects.select_related("dictionary") \
-            .filter(username=username).values("id") \
+            .filter(username=request.user).values("id") \
                 .annotate(dictioanry_name=models.F('dictionary__dictionary_name'))
 
         form.is_valid()
@@ -54,24 +56,24 @@ def create_dictionary(request, username):
                 new_dictionary.save()
 
             # return HttpResponse("Succeeded!")
-            return redirect(reverse("user_dictionaries", kwargs={'username': username}))
+            return redirect(reverse("user_dictionaries"))
         else:
             raise ValueError("Dictionary name already exists")
             
 
     else:
         try:
-            user = User.objects.get(username=username)
+            user = User.objects.get(username=request.user)
             form = NewDictionaryForm()
 
             return render(request, "new_dictionary.html", {"form": form})
         except ObjectDoesNotExist:
             return HttpResponseNotFound("Username not found!")
         
-
-def get_dictionary_content(request, username, dictionary_name):
+@login_required()
+def get_dictionary_content(request, dictionary_name):
     try:
-        user = User.objects.get(username=username)
+        user = User.objects.get(username=request.user)
         try:
             user_dictionary = Dictionary.objects.filter(user=user).get(dictionary_name=dictionary_name)
         except ObjectDoesNotExist:
@@ -88,11 +90,11 @@ def get_dictionary_content(request, username, dictionary_name):
         return render(request, template_name, template_context)
     
 
-
-def add_translation(request, username, dictionary_name):
+@login_required()
+def add_translation(request, dictionary_name):
 
     try:
-        requested_user = User.objects.filter(username=username).get()
+        requested_user = User.objects.filter(username=request.user).get()
         try:
             requested_dictionary = Dictionary.objects.filter(user=requested_user, dictionary_name=dictionary_name).get()
 
@@ -114,9 +116,9 @@ def add_translation(request, username, dictionary_name):
 
             template_name = 'new_translation.html'
             template_context = {
-            'form': form,
-            'dictionary':requested_dictionary,
-        }
+                'form': form,
+                'dictionary':requested_dictionary,
+            }
             return render(request, template_name, template_context)
         except ObjectDoesNotExist:
             return HttpResponseNotFound("Dictionary not found!")
