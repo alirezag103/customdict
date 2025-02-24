@@ -26,6 +26,31 @@
                 <td>{{record.translation}}</td>
             </tr>
             {% endfor %}
+            <tr>
+                <td colspan="100%">
+                    <button onclick="showForm()" align="center">Add new</button>
+                </td>
+            </tr>
         </table>
+        <dialog id="newTranslationDialog">
+            <form method="post">
+                {{ form }}
+                {% csrf_token %}
+                <button type="submit">Add</button>
+                <button type="button" onclick="closeForm()">Close</button>
+            </form>
+        </dialog>
+
+        <script>
+            const dialog = document.getElementById("newTranslationDialog"); 
+            
+            function showForm() { 
+              dialog.show(); 
+            } 
+            
+            function closeForm() { 
+              dialog.close(); 
+            } 
+            </script>
     </body>
 </html>
