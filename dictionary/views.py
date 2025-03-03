@@ -1,6 +1,6 @@
 import keyword
 from django import forms
-from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFound
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFound, HttpResponseNotAllowed
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views import View
@@ -79,6 +79,13 @@ class CreateDictionary(View):
 
 class DictionaryContent(View):
 
+    def dispatch(self, request, *args, **kwargs):
+        if self.request.POST.get('action', '').casefold() == "delete":
+            kwargs["translation_keyword"] = self.request.POST.get('keyword', '')
+            return self.delete(request, *args, **kwargs)
+        else:
+            return super().dispatch(request, *args, **kwargs)
+
     def get(self, request, username, dictionary_name):
         try:
             requested_user = User.objects.filter(username=username).get()
@@ -105,29 +112,30 @@ class DictionaryContent(View):
             requested_user = User.objects.filter(username=username).get()
             try:
                 requested_dictionary = Dictionary.objects.filter(user=requested_user, dictionary_name=dictionary_name).get()
-                if self.request.POST.get('action', '').casefold() == "delete":
-                    return self.delete(request, username, requested_dictionary, self.request.POST.get('keyword', ''))
-                else:
-                    form = AddTranslationFrom(request.POST)
-                    form.is_valid()
-                    try:
-                        duplicate_translation = Translation.objects \
-                            .filter(dictionary=requested_dictionary, keyword=form.cleaned_data['keyword']).get()
-                        return HttpResponseBadRequest(f'Keyword "{duplicate_translation.keyword}" already exists!')
-                    except ObjectDoesNotExist:
-                        pass
-                    Translation.objects.create(
-                        dictionary=requested_dictionary,
-                        keyword=form.cleaned_data['keyword'],
-                        translation=form.cleaned_data['translation'],
-                    )
-                    return self.get(request, username, dictionary_name)
+                form = AddTranslationFrom(request.POST)
+                form.is_valid()
+                try:
+                    duplicate_translation = Translation.objects \
+                        .filter(dictionary=requested_dictionary, keyword=form.cleaned_data['keyword']).get()
+                    return HttpResponseBadRequest(f'Keyword "{duplicate_translation.keyword}" already exists!')
+                except ObjectDoesNotExist:
+                    pass
+                Translation.objects.create(
+                    dictionary=requested_dictionary,
+                    keyword=form.cleaned_data['keyword'],
+                    translation=form.cleaned_data['translation'],
+                )
+                return self.get(request, username, dictionary_name)
             except ObjectDoesNotExist:
                 return HttpResponseNotFound("Dictionary not found!")
         except ObjectDoesNotExist:
             return HttpResponseNotFound("User not found!")
         
-    def delete(self, request, username, requested_dictionary, translation_keyword):
+    def delete(self, request, username, dictionary_name, translation_keyword):
+        try:
+            requested_user = User.objects.filter(username=username).get()
+            try:
+                requested_dictionary = Dictionary.objects.filter(user=requested_user, dictionary_name=dictionary_name).get()
                 try:
                     translation_to_delete = Translation.objects \
                         .filter(dictionary=requested_dictionary, keyword=translation_keyword).get()
@@ -135,3 +143,7 @@ class DictionaryContent(View):
                     return self.get(request, username, requested_dictionary.dictionary_name)
                 except ObjectDoesNotExist:
                     return HttpResponseBadRequest(f'Keyword "{translation_keyword}" does not exist!')
+            except ObjectDoesNotExist:
+                return HttpResponseNotFound("Dictionary not found!")
+        except ObjectDoesNotExist:
+            return HttpResponseNotFound("User not found!")
