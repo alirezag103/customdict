@@ -80,70 +80,55 @@ class CreateDictionary(View):
 class DictionaryContent(View):
 
     def dispatch(self, request, *args, **kwargs):
+        try:
+            requested_user = User.objects.filter(username=kwargs["username"]).get()
+            try:
+                requested_dictionary = Dictionary.objects.filter(user=requested_user, dictionary_name=kwargs["dictionary_name"]).get()
+            except ObjectDoesNotExist:
+                return HttpResponseBadRequest("Dictionary not found!")
+        except ObjectDoesNotExist:
+            return HttpResponseNotFound("User not found!")
+        kwargs = dict()
+        kwargs["requested_dictionary"] = requested_dictionary
         if self.request.POST.get('action', '').casefold() == "delete":
             kwargs["translation_keyword"] = self.request.POST.get('keyword', '')
             return self.delete(request, *args, **kwargs)
         else:
             return super().dispatch(request, *args, **kwargs)
 
-    def get(self, request, username, dictionary_name):
-        try:
-            requested_user = User.objects.filter(username=username).get()
-            try:
-                requested_dictionary = Dictionary.objects.filter(user=requested_user, dictionary_name=dictionary_name).get()
-            except ObjectDoesNotExist:
-                return HttpResponseBadRequest("The dictionary does not exist! <br>or You can not access that!")
-        except ObjectDoesNotExist:
-            return HttpResponseNotFound("Username not found!")
-        else:
-            dictionary_content = Translation.objects.filter(dictionary=requested_dictionary)
-            form = AddTranslationFrom()
-            template_name = 'dictionary.html'
-            template_context = {
-                'dictionary': requested_dictionary,
-                'translations': dictionary_content,
-                'form': form,
-            }
-            return render(request, template_name, template_context)
+    def get(self, request, requested_dictionary):
 
-    def post(self, request, username, dictionary_name):
+        dictionary_content = Translation.objects.filter(dictionary=requested_dictionary)
+        form = AddTranslationFrom()
+        template_name = 'dictionary.html'
+        template_context = {
+            'dictionary': requested_dictionary,
+            'translations': dictionary_content,
+            'form': form,
+        }
+        return render(request, template_name, template_context)
 
+    def post(self, request, requested_dictionary):
+        form = AddTranslationFrom(request.POST)
+        form.is_valid()
         try:
-            requested_user = User.objects.filter(username=username).get()
-            try:
-                requested_dictionary = Dictionary.objects.filter(user=requested_user, dictionary_name=dictionary_name).get()
-                form = AddTranslationFrom(request.POST)
-                form.is_valid()
-                try:
-                    duplicate_translation = Translation.objects \
-                        .filter(dictionary=requested_dictionary, keyword=form.cleaned_data['keyword']).get()
-                    return HttpResponseBadRequest(f'Keyword "{duplicate_translation.keyword}" already exists!')
-                except ObjectDoesNotExist:
-                    pass
-                Translation.objects.create(
-                    dictionary=requested_dictionary,
-                    keyword=form.cleaned_data['keyword'],
-                    translation=form.cleaned_data['translation'],
-                )
-                return self.get(request, username, dictionary_name)
-            except ObjectDoesNotExist:
-                return HttpResponseNotFound("Dictionary not found!")
+            duplicate_translation = Translation.objects \
+                .filter(dictionary=requested_dictionary, keyword=form.cleaned_data['keyword']).get()
+            return HttpResponseBadRequest(f'Keyword "{duplicate_translation.keyword}" already exists!')
         except ObjectDoesNotExist:
-            return HttpResponseNotFound("User not found!")
+            pass
+        Translation.objects.create(
+            dictionary=requested_dictionary,
+            keyword=form.cleaned_data['keyword'],
+            translation=form.cleaned_data['translation'],
+        )
+        return self.get(request, requested_dictionary)
         
-    def delete(self, request, username, dictionary_name, translation_keyword):
+    def delete(self, request, requested_dictionary, translation_keyword):
         try:
-            requested_user = User.objects.filter(username=username).get()
-            try:
-                requested_dictionary = Dictionary.objects.filter(user=requested_user, dictionary_name=dictionary_name).get()
-                try:
-                    translation_to_delete = Translation.objects \
-                        .filter(dictionary=requested_dictionary, keyword=translation_keyword).get()
-                    translation_to_delete.delete()
-                    return self.get(request, username, requested_dictionary.dictionary_name)
-                except ObjectDoesNotExist:
-                    return HttpResponseBadRequest(f'Keyword "{translation_keyword}" does not exist!')
-            except ObjectDoesNotExist:
-                return HttpResponseNotFound("Dictionary not found!")
+            translation_to_delete = Translation.objects \
+                .filter(dictionary=requested_dictionary, keyword=translation_keyword).get()
+            translation_to_delete.delete()
+            return self.get(request, requested_dictionary)
         except ObjectDoesNotExist:
-            return HttpResponseNotFound("User not found!")
+            return HttpResponseBadRequest(f'Keyword "{translation_keyword}" does not exist!')
